@@ -2,34 +2,40 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\Comment;
 use Carbon\Carbon;
 use Livewire\Component;
 
 class Comments extends Component
 {
 
-    public $comments=[
-        [
-            'body' => 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Magnam fugit quia exercitationem cum eum, animi tempore adipisci, voluptates voluptatum, harum tempora architecto. Ullam perspiciatis suscipit iure, dicta autem dolores expedita.',
-            'name' => 'Mohamed Ezat',
-            'time' => '30 min ago'
-        ]
-    ];
-
+    public $comments;
     public $newComment;
 
-    public function addComment(){
-        if($this->newComment == ""){
-            return;
-        }
+    public function mount(){
+        $initialComment= Comment::latest()->get();
+        $this->comments = $initialComment;
+    }
 
-        array_unshift($this->comments,[
-            'body' => $this->newComment,
-            'name' => 'zahara Ezat',
-            'time' => Carbon::now()->diffForHumans() 
+
+    public function updated($propertyName)
+    {
+        $this->validateOnly($propertyName, [
+            'newComment' => 'required|max:255',
         ]);
+    }
 
+    public function addComment(){
+        $this->validate(['newComment' => 'required | max:255']);
+        $CreateComment= Comment::create(['body'=> $this->newComment,'user_id'=>1]);
+        $this->comments->prepend($CreateComment);
         $this->newComment='';
+    }
+
+    public function remove($id){
+        $comment= Comment::find($id);
+        $comment->delete();
+        $this->comments = $this->comments->except($id);
     }
 
     public function render()
